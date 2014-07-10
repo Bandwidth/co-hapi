@@ -52,6 +52,12 @@ describe("route handlers", function(){
         reply("Named handler");
       };
     });
+    server.handler("standard", function(route, options){
+      return function(request, reply){
+        options.option1.should.equal(2);
+        reply("Standard named handler");
+      };
+    });
     server.route([{
       method: "GET",
       path: "/",
@@ -71,7 +77,26 @@ describe("route handlers", function(){
       method: "GET",
       path: "/namedHandler",
       handler: {"test": {option1: 1}}
-    }]);
+    },
+    {
+      method: "GET",
+      path: "/standard",
+      config: {
+        pre: [{method: function(request, reply){
+          reply("Pre");
+        }, assign: "pre1"}]
+      },
+      handler: function(request, reply){
+        request.pre.pre1.should.equal("Pre");
+        reply("Standard handler");
+      }
+    },
+    {
+      method: "GET",
+      path: "/standardNamedHandler",
+      handler: {"standard": {option1: 2}}
+    },
+    ]);
     yield server.start();
   });
 
@@ -86,4 +111,13 @@ describe("route handlers", function(){
   it("should allow to use generators inside named route handler", function*(){
     yield supertest(server.listener).get("/namedHandler").expect(200).expect("Named handler").end();
   });
+
+  it("should allow to use standard route handler", function*(){
+    yield supertest(server.listener).get("/standard").expect(200).expect("Standard handler").end();
+  });
+
+  it("should allow to use standard named route handler", function*(){
+    yield supertest(server.listener).get("/standardNamedHandler").expect(200).expect("Standard named handler").end();
+  });
+
 });
