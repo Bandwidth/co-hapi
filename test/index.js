@@ -70,7 +70,7 @@ describe("route handlers", function(){
       handler: function* (request, reply) {
         yield tick();
         request.pre.pre1.should.equal("Pre");
-        reply("Hello, world!");
+        reply("Handler");
       }
     },
     {
@@ -126,7 +126,7 @@ describe("route handlers", function(){
   });
 
   it("should allow to use generators as route handler", function*(){
-    yield supertest(server.listener).get("/").expect(200).expect("Hello, world!").end();
+    yield supertest(server.listener).get("/").expect(200).expect("Handler").end();
   });
 
   it("should allow to use generators inside named route handler", function*(){
@@ -154,4 +154,81 @@ describe("route handlers", function(){
     r.body.message.should.equal("Hapi error");
   });
 
+});
+
+
+describe("server events", function(){
+  let server, rootCalled = false, standardRootCalled = false;
+  before(function*(){
+    server = new Hapi.Server(3001);
+    server.ext("onRequest", function*(request){
+      if(request.url.path == "/"){
+        yield tick();
+        rootCalled = true;
+        return;
+      }
+      if(request.url.path == "/withError"){
+        throw Hapi.error.badRequest();
+      }
+      if(request.url.path == "/withData"){
+        return "Test data";
+      }
+    });
+
+    server.ext("onRequest", function(request, next){
+      if(request.url.path == "/"){
+        standardRootCalled = true;
+        next();
+        return;
+      }
+      if(request.url.path == "/standardWithError"){
+        return next(Hapi.error.badRequest());
+      }
+      if(request.url.path == "/standardWithData"){
+        return next(null, "Test data");
+      }
+    });
+    server.route({
+      method: "GET",
+      path: "/",
+      handler: function* (request, reply) {
+        reply("Handler");
+      }
+    });
+    yield server.start();
+  });
+
+  after(function*(){
+    yield server.stop();
+    rootCalled = false;
+    standardRootCalled = false;
+  });
+
+  it("should allow to use generator as handler of server's events", function*(){
+    yield supertest(server.listener).get("/").expect(200).expect("Handler").end();
+    rootCalled.should.be.true;
+    rootCalled = false;
+  });
+
+  it("should allow to event handler generators throw error", function*(){
+    yield supertest(server.listener).get("/withError").expect(400).end();
+  });
+
+  it("should allow to event handler generators return data", function*(){
+    yield supertest(server.listener).get("/withData").expect(200).expect("Test data").end();
+  });
+
+  it("should allow to use standard handler of server's events", function*(){
+    yield supertest(server.listener).get("/").expect(200).expect("Handler").end();
+    standardRootCalled.should.be.true;
+    standardRootCalled = false;
+  });
+
+  it("should allow to standard handler throw error", function*(){
+    yield supertest(server.listener).get("/standardWithError").expect(400).end();
+  });
+
+  it("should allow to standard handler return data", function*(){
+    yield supertest(server.listener).get("/standardWithData").expect(200).expect("Test data").end();
+  });
 });

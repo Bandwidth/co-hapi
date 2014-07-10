@@ -5,14 +5,13 @@ let Server = Hapi.Server;
 let Pack = Hapi.Pack;
 
 
-function wrapHandler(handler){
+function wrapHandler(handler, useReplyAsNext){
   if(typeof handler !== "function"){
     return handler;
   }
   let originalHandler = handler;
   let wrapper = function(request, reply){
     let handleError = function(err){
-      debugger;
       if(err){
         if(err.isBoom){
           return reply(err);
@@ -26,8 +25,13 @@ function wrapHandler(handler){
       typeof result === "function") /* thunk function */){
       try{
         co(result)(function(err, data){
-          handleError(err)
-          if(data && !err){
+          if(err){
+            return handleError(err);
+          }
+          if(useReplyAsNext){
+            return reply(err, data);
+          }
+          if(data){
             return reply(data);
           }
         })
@@ -88,6 +92,16 @@ Server.prototype._route = function (configs, env) {
   wrapConfigs(configs);
   return _route.call(this, configs, env);
 };
+
+let _ext = Server.prototype._ext || Server.prototype.ext;
+Server.prototype._ext = Server.prototype.ext = function(){
+  let args =  Array.prototype.slice.call(arguments, 0);
+  let fn = args[1];
+  if(typeof fn === "function"){
+    args[1] = wrapHandler(fn, true);
+  }
+  _ext.apply(this, args);
+}
 
 let _handler = Pack.prototype._handler;
 Pack.prototype._handler = function(name, fn){
