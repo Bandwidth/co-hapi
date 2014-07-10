@@ -1,0 +1,31 @@
+{
+  "name": "co-hapi",
+  "version": "0.0.0",
+  "description": "Use power os ES6 generators and co inside hapi",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --harmony -r co-mocha -r should"
+  },
+  "author": "avbel",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avbel/co-hapi.git"
+  },
+  "keywords": [
+    "co",
+    "hapi",
+    "es6",
+    "generators"
+  ],
+  "dependencies": {
+    "co": "*"
+  },
+  "devDependencies": {
+    "co-mocha": "0.0.4",
+    "co-supertest": "0.0.7",
+    "mocha": "^1.20.1",
+    "should": "^4.0.4",
+    "supertest": "^0.13.0"
+  }
+}
