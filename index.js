@@ -11,22 +11,30 @@ function wrapHandler(handler){
   }
   let originalHandler = handler;
   let wrapper = function(request, reply){
-    debugger;
+    let handleError = function(err){
+      debugger;
+      if(err){
+        if(err.isBoom){
+          return reply(err);
+        }
+        return reply(Hapi.error.internal(err));
+      }
+    };
     let result = originalHandler(request, reply);
     if(result && (typeof result.next === "function" /* generator */ ||
       typeof result.then === "function" /* promise */ ||
       typeof result === "function") /* thunk function */){
-      co(result)(function(err, data){
-        if(err){
-          if(err.statusCode){
-            return reply(err);
+      try{
+        co(result)(function(err, data){
+          handleError(err)
+          if(data && !err){
+            return reply(data);
           }
-          return reply(Hapi.error(err.message || err));
-        }
-        if(data){
-          return reply(data);
-        }
-      });
+        })
+      }
+      catch(err){
+        handleError(err);
+      }
     }
   };
   return wrapper;

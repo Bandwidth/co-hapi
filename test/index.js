@@ -96,6 +96,27 @@ describe("route handlers", function(){
       path: "/standardNamedHandler",
       handler: {"standard": {option1: 2}}
     },
+    {
+      method: "GET",
+      path: "/withoutReply",
+      handler: function*(request){
+        return "Without reply";
+      }
+    },
+    {
+      method: "GET",
+      path: "/withError",
+      handler: function*(request){
+        throw new Error("Some error");
+      }
+    },
+    {
+      method: "GET",
+      path: "/withHapiError",
+      handler: function*(request){
+        throw Hapi.error.notFound("Hapi error");
+      }
+    }
     ]);
     yield server.start();
   });
@@ -118,6 +139,19 @@ describe("route handlers", function(){
 
   it("should allow to use standard named route handler", function*(){
     yield supertest(server.listener).get("/standardNamedHandler").expect(200).expect("Standard named handler").end();
+  });
+
+  it("should allow to use generators as route handler without reply", function*(){
+    yield supertest(server.listener).get("/withoutReply").expect(200).expect("Without reply").end();
+  });
+
+  it("should handle generator's exceptions", function*(){
+    yield supertest(server.listener).get("/withError").expect(500).end(); //actual error message is hidden
+  });
+
+  it("should handle generator's exceptions of type hapi.error", function*(){
+    let r = yield supertest(server.listener).get("/withHapiError").expect(404).end();
+    r.body.message.should.equal("Hapi error");
   });
 
 });
