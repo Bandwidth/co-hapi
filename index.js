@@ -18,6 +18,9 @@ function wrapHandler(handler){
       typeof result === "function") /* thunk function */){
       co(result)(function(err, data){
         if(err){
+          if(err.statusCode){
+            return reply(err);
+          }
           return reply(Hapi.error(err.message || err));
         }
         if(data){
@@ -42,11 +45,25 @@ function wrapPreItem(item){
   return item;
 }
 
+function wrapConfigs(configs){
+  configs = configs || {};
+  if(Array.isArray(configs)){
+    configs.forEach(wrapConfigs);
+  }
+  else{
+    configs.handler = wrapHandler(configs.handler);
+    if(configs.config){
+      configs.config.handler = wrapHandler(configs.config.handler);
+      configs.config.pre = (configs.config.pre || []).map(wrapPreItem);
+    }
+  }
+}
+
 function shim(type, methodName){
   let original = type.prototype[methodName];
   type.prototype[methodName] = function(){
     let args =  Array.prototype.slice.call(arguments, 0);
-    if(typeof args[args.length] === "function"){
+    if(typeof args[args.length - 1] === "function"){
       return original.apply(this, args);
     }
     let self = this;
@@ -60,20 +77,20 @@ function shim(type, methodName){
 
 let _route = Server.prototype._route;
 Server.prototype._route = function (configs, env) {
-  debugger;
-  configs.handler = wrapHandler(configs.handler);
-  if(configs.config){
-    configs.config.handler = wrapHandler(configs.config.handler);
-    configs.config.pre = (configs.config.pre || []).map(wrapPreItem);
-  }
+  wrapConfigs(configs);
   return _route.call(this, configs, env);
+};
+
+let _handler = Pack.prototype._handler;
+Pack.prototype._handler = function(name, fn){
+  return _handler.call(this, name, function(route, options){
+    return wrapHandler(fn(route, options));
+  });
 };
 
 shim(Server, "start");
 shim(Server, "stop");
 
-shim(Pack, "start");
-shim(Pack, "stop");
-shim(Pack, "register");
+//shim(Pack, "register");
 
 module.exports = Hapi;

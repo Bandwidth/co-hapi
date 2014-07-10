@@ -8,12 +8,51 @@ function tick(){
   };
 }
 
+describe("Server", function(){
+  describe("#start", function(){
+    let server;
+    beforeEach(function(){
+      server = new Hapi.Server(3001);
+    });
+    afterEach(function(done){
+      server.stop(done);
+    });
+    it("should be called via yield", function*(){
+      yield server.start();
+    });
+    it("should be called with callback", function(done){
+      server.start(done);
+    });
+  });
 
-describe("handlers", function(){
+  describe("#stop", function(){
+    let server;
+    beforeEach(function(done){
+      server = new Hapi.Server(3001);
+      server.start(done);
+    });
+    it("should be called via yield", function*(){
+      yield server.stop();
+    });
+    it("should be called with callback", function(done){
+      server.stop(done);
+    });
+  });
+});
+
+
+describe("route handlers", function(){
   let server;
   before(function*(){
     server = new Hapi.Server(3001);
-    server.route({
+    server.handler("test", function(route, options){
+      return function*(request, reply){
+        yield tick();
+        options.option1.should.equal(1);
+        reply("Named handler");
+      };
+    });
+    server.route([{
       method: "GET",
       path: "/",
       config: {
@@ -27,8 +66,12 @@ describe("handlers", function(){
         request.pre.pre1.should.equal("Pre");
         reply("Hello, world!");
       }
-    });
-    debugger;
+    },
+    {
+      method: "GET",
+      path: "/namedHandler",
+      handler: {"test": {option1: 1}}
+    }]);
     yield server.start();
   });
 
@@ -36,7 +79,11 @@ describe("handlers", function(){
     yield server.stop();
   });
 
-  it("should", function*(){
+  it("should allow to use generators as route handler", function*(){
     yield supertest(server.listener).get("/").expect(200).expect("Hello, world!").end();
+  });
+
+  it("should allow to use generators inside named route handler", function*(){
+    yield supertest(server.listener).get("/namedHandler").expect(200).expect("Named handler").end();
   });
 });
