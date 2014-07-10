@@ -53,11 +53,11 @@ co(function*(){
       path: "/",
       config: {
         pre: [{method: function*(request, reply){
-          //'reply' is optional too here
+          //'reply' is optional here too
         }, assign: "pre1"}]
       },
       handler: function* (request, reply) {
-        //'reply' is optional too here
+        //'reply' is optional here too
         let result = yield someOperation();
         reply(result); //or use 'return result;' instead of it
       }
