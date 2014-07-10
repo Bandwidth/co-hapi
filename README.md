@@ -48,6 +48,10 @@ co(function*(){
     };
   });
 
+  server.method("add", function*(a, b){
+    return a + b; //use 'return' or 'throw' instead of 'next'
+  });
+
   server.route({
     method: "GET",
       path: "/",

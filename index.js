@@ -4,6 +4,12 @@ let Hapi = require("hapi");
 let Server = Hapi.Server;
 let Pack = Hapi.Pack;
 
+function canUseCo(result){
+ return result && (typeof result.next === "function" /* generator */ ||
+      typeof result.then === "function" /* promise */ ||
+      typeof result === "function") /* thunk function */;
+}
+
 
 function wrapHandler(handler, useReplyAsNext){
   if(typeof handler !== "function"){
@@ -20,9 +26,7 @@ function wrapHandler(handler, useReplyAsNext){
       }
     };
     let result = originalHandler(request, reply);
-    if(result && (typeof result.next === "function" /* generator */ ||
-      typeof result.then === "function" /* promise */ ||
-      typeof result === "function") /* thunk function */){
+    if(canUseCo(result)){
       co(result)(function(err, data){
         if(err){
           return handleError(err);
@@ -99,6 +103,29 @@ Server.prototype._ext = Server.prototype.ext = function(){
 }
 
 let _handler = Pack.prototype._handler;
+Pack.prototype._handler = function(name, fn){
+  return _handler.call(this, name, function(route, options){
+    return wrapHandler(fn(route, options));
+  });
+};
+
+let _method = Pack.prototype._method;
+
+Pack.prototype._method = function(){
+  let args = Array.prototype.slice.call(arguments, 0);
+  let fn = args[1];
+  if(typeof fn === "function"){
+    args[1] = function(){
+      let result = fn.apply(this, arguments);
+      if(canUseCo(result)){
+        let next = arguments[arguments.length - 1];
+        co(result)(next);
+      }
+    };
+  }
+  _method.apply(this, args);
+};
+
 Pack.prototype._handler = function(name, fn){
   return _handler.call(this, name, function(route, options){
     return wrapHandler(fn(route, options));

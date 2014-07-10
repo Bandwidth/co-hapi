@@ -232,3 +232,40 @@ describe("server events", function(){
     yield supertest(server.listener).get("/standardWithData").expect(200).expect("Test data").end();
   });
 });
+
+describe("methods", function(){
+  let server;
+  before(function*(){
+    server = new Hapi.Server(3001);
+    server.method("add", function*(a, b){
+      yield tick();
+      return a + b;
+    });
+
+    server.method("stdAdd", function(a, b, next){
+      next(null, a + b);
+    });
+
+  });
+
+  it("should add ability to use generators as server's method", function(done){
+    server.methods.add(2, 3, function(err, result){
+      if(err){
+        return done(err);
+      }
+      result.should.equal(5);
+      done();
+    });
+  });
+
+  it("should also support standart functions as server's method", function(done){
+    server.methods.stdAdd(5, 3, function(err, result){
+      if(err){
+        return done(err);
+      }
+      result.should.equal(8);
+      done();
+    });
+  });
+
+});
