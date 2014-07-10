@@ -23,22 +23,17 @@ function wrapHandler(handler, useReplyAsNext){
     if(result && (typeof result.next === "function" /* generator */ ||
       typeof result.then === "function" /* promise */ ||
       typeof result === "function") /* thunk function */){
-      try{
-        co(result)(function(err, data){
-          if(err){
-            return handleError(err);
-          }
-          if(useReplyAsNext){
-            return reply(err, data);
-          }
-          if(data){
-            return reply(data);
-          }
-        })
-      }
-      catch(err){
-        handleError(err);
-      }
+      co(result)(function(err, data){
+        if(err){
+          return handleError(err);
+        }
+        if(useReplyAsNext){
+          return reply(err, data);
+        }
+        if(data){
+          return reply(data);
+        }
+      });
     }
   };
   return wrapper;
