@@ -4,7 +4,7 @@
 [![Dependencies](https://david-dm.org/avbel/co-hapi.png)](https://david-dm.org/avbel/co-hapi)
 
 
-This module lets you use powered by (co)[https://github.com/visionmedia/co] generators inside (hapi)[http://hapijs.com/] applications. Node 0.11+ is required.
+This module lets you use powered by [co](https://github.com/visionmedia/co) generators inside [hapi](http://hapijs.com/) applications. Node 0.11+ is required.
 
 
 ## Install
