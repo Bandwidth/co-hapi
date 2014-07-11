@@ -1,5 +1,6 @@
 "use strict";
 let supertest = require("co-supertest");
+let path = require("path");
 let Hapi = require("../");
 
 function tick(){
@@ -423,5 +424,26 @@ describe("plugin's actions", function(){
 
   it("should allow to use generators inside plugin.ext()", function*(){
     yield supertest(server.listener).get("/ext").expect(200).expect("Ext").end();
+  });
+});
+
+describe("Pack.compose()", function(){
+  it("should allow to be called with yield", function*(){
+    let manifest = {
+      pack: {
+        cache: "catbox-memory"
+      },
+      servers: [{
+        port: 3001,
+        options: {
+          labels: ["web"]
+        }
+      }],
+      plugins:{
+      }
+    };
+    manifest.plugins[path.join(__dirname, "test_plugin.js")] = {};
+    let pack = yield Hapi.Pack.compose(manifest);
+    pack.should.be.ok;
   });
 });

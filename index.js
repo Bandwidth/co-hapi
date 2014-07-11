@@ -117,7 +117,9 @@ function wrapPluginRegister(plugin){
       co(result)(next);
     }
   };
-  plugin.register.attributes = register.attributes;
+  if(register.attributes){
+    plugin.register.attributes = register.attributes;
+  }
 }
 
 function shim(type, methodName, shimInstance){
@@ -181,8 +183,13 @@ Pack.prototype._method = function(){
 
 let _register = Pack.prototype._register;
 Pack.prototype._register = function(plugins){
-  plugins = Array.isArray(plugins)? plugins: [plugins];
-  plugins.forEach(wrapPluginRegister);
+  if(plugins.plugin){
+    wrapPluginRegister(plugins.plugin);
+  }
+  else{
+    plugins = Array.isArray(plugins)? plugins: [plugins];
+    plugins.forEach(wrapPluginRegister);
+  }
   _register.apply(this, arguments);
 };
 
@@ -190,5 +197,6 @@ shim(Server, "start");
 shim(Server, "stop");
 
 shim(Pack, "register");
+shim(Pack, "compose", true);
 
 module.exports = Hapi;
