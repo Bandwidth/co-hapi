@@ -70,6 +70,17 @@ function wrapConfigs(configs){
   }
 }
 
+function wrapPluginRegister(plugin){
+  let register = plugin.register;
+  plugin.register = function(plugin, options, next){
+    let result = register.apply(this, arguments);
+    if(canUseCo(result)){
+      co(result)(next);
+    }
+  };
+  plugin.register.attributes = register.attributes;
+}
+
 function shim(type, methodName){
   let original = type.prototype[methodName];
   type.prototype[methodName] = function(){
@@ -126,10 +137,12 @@ Pack.prototype._method = function(){
   _method.apply(this, args);
 };
 
-Pack.prototype._handler = function(name, fn){
-  return _handler.call(this, name, function(route, options){
-    return wrapHandler(fn(route, options));
-  });
+let _register = Pack.prototype._register;
+Pack.prototype._register = function(plugins){
+  plugins = Array.isArray(plugins)? plugins: [plugins];
+  plugins.forEach(wrapPluginRegister);
+  debugger;
+  _register.apply(this, arguments);
 };
 
 shim(Server, "start");

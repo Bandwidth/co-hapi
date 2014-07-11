@@ -79,3 +79,16 @@ co(function*(){
 
 
 ```
+
+Inside plugin
+
+```
+module.exports.register = function*(plugin, options){ // plugins with function(plugin, options, next){} are supported too
+  //do plugins operations here
+};
+
+module.exports.register.attributes = {
+  name: "name",
+  version: "1.0.0"
+};
+```

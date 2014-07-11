@@ -271,7 +271,8 @@ describe("methods", function(){
 });
 
 describe("registering of plugins", function(){
-  let server, plugin1, plugin1Registered = false, plugin2, plugin2Registered = false;
+  let server, plugin1, plugin1Registered = false,
+    plugin2, plugin2Registered = false, plugin3, plugin3Registered = false;
   before(function*(){
     plugin1 = {
       register: function(plugin, options, next){
@@ -285,12 +286,22 @@ describe("registering of plugins", function(){
         next();
       }
     };
+    plugin3 = {
+      register: function*(plugin, options){
+        yield tick();
+        plugin3Registered = true;
+      }
+    };
     plugin1.register.attributes = {
       name: "plugin1",
       version: "1.0.0"
     };
     plugin2.register.attributes = {
       name: "plugin2",
+      version: "1.0.0"
+    };
+    plugin3.register.attributes = {
+      name: "plugin3",
       version: "1.0.0"
     };
     server = new Hapi.Server(3001);
@@ -311,5 +322,11 @@ describe("registering of plugins", function(){
       plugin2Registered.should.be.true;
       done();
     });
+  });
+
+  it("should add ability to use generator as plugin's register", function*(){
+    plugin3Registered = false;
+    yield server.pack.register(plugin3);
+    plugin3Registered.should.be.true;
   });
 });
