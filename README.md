@@ -68,7 +68,8 @@ co(function*(){
         reply(result); //or use 'return result;' instead of it
       }
   });
-
+  let v = yield Hapi.state.prepareValue("name", val, {});
+  let pack = yield Hapi.Pack.compose(manifest); //composing a pack
   yield server.start();
   //the server will be started here. Use 'yield server.stop()' to stop it
 })(function(err){
