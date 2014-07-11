@@ -447,3 +447,10 @@ describe("Pack.compose()", function(){
     pack.should.be.ok;
   });
 });
+
+describe("state.prepareValue()", function(){
+  it("should allow to be called with yield", function*(){
+    let value = yield Hapi.state.prepareValue("test", "value", {});
+    value.should.equal("value");
+  });
+});

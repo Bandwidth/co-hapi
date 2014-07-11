@@ -199,4 +199,6 @@ shim(Server, "stop");
 shim(Pack, "register");
 shim(Pack, "compose", true);
 
+shim(Hapi.state, "prepareValue", true);
+
 module.exports = Hapi;
