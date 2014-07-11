@@ -85,6 +85,17 @@ Inside plugin
 ```
 module.exports.register = function*(plugin, options){ // plugins with function(plugin, options, next){} are supported too
   //do plugins operations here
+  plugin.ext("onRequest", function*(request){
+
+  });
+
+  plugin.dependency("my-plugin1", function*(plugin){
+    //actions after loading my-plugin1
+  });
+
+  plugin.route({...}); //like server.route()
+
+  plugin.handler(...); //like server.handler()
 };
 
 module.exports.register.attributes = {
