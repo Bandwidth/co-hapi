@@ -10,6 +10,34 @@ function canUseCo(result){
       typeof result === "function") /* thunk function */;
 }
 
+function wrapPluginRoot(plugin){
+  let method = plugin.method;
+  plugin.method = function(){
+    let args = Array.prototype.slice.call(arguments, 0);
+    let fn = args[1];
+    if(typeof fn === "function"){
+      args[1] = function(){
+        let result = fn.apply(this, arguments);
+        if(canUseCo(result)){
+          let next = arguments[arguments.length - 1];
+          co(result)(next);
+        }
+      };
+    }
+    return method.apply(this, args);
+  };
+  let after = plugin.after;
+  plugin.after = function(fn){
+    return after.call(this, wrapHandler(fn, true));
+  };
+  let handler = plugin.handler;
+  plugin.handler = function(name, fn){
+    return handler.call(this, name, function(route, options){
+      return wrapHandler(fn(route, options));
+    });
+  };
+}
+
 
 function wrapHandler(handler, useReplyAsNext){
   if(typeof handler !== "function"){
@@ -73,6 +101,7 @@ function wrapConfigs(configs){
 function wrapPluginRegister(plugin){
   let register = plugin.register;
   plugin.register = function(plugin, options, next){
+    wrapPluginRoot(plugin);
     let result = register.apply(this, arguments);
     if(canUseCo(result)){
       co(result)(next);
@@ -141,7 +170,6 @@ let _register = Pack.prototype._register;
 Pack.prototype._register = function(plugins){
   plugins = Array.isArray(plugins)? plugins: [plugins];
   plugins.forEach(wrapPluginRegister);
-  debugger;
   _register.apply(this, arguments);
 };
 

@@ -330,3 +330,70 @@ describe("registering of plugins", function(){
     plugin3Registered.should.be.true;
   });
 });
+
+describe("plugin's actions", function(){
+  let server, afterCalled = false;
+  before(function*(){
+    server = new Hapi.Server(3001);
+    let plugin1 =  {
+      register: function*(plugin, options){
+        plugin.after(function*(p){
+          yield tick();
+          p.should.equal(plugin);
+          afterCalled = true;
+        });
+        plugin.method("sum", function*(a,b){return a+b;});
+        plugin.handler("pluginHandler", function(route, options){
+          return function*(request){
+            options.option1.should.equal(1);
+            return "Plugin Handler";
+          };
+        });
+        plugin.route([
+          {
+            method: "GET",
+            path: "/handler",
+            handler: function* (request, reply) {
+              yield tick();
+              reply("Handler");
+            }
+          },
+          {
+            method: "GET",
+            path: "/namedHandler",
+            handler: {"pluginHandler": {option1: 1}}
+          }
+        ]);
+      },
+      name: "plugin1"
+    };
+    yield server.pack.register(plugin1);
+    yield server.start();
+  });
+
+  after(function*(){
+    yield server.stop();
+  });
+
+  it("should allow to use generators inside plugin.server()", function(done){
+    server.methods.sum(1, 2, function(err, result){
+      if(err){
+        return done(err);
+      }
+      result.should.equal(3);
+      done();
+    });
+  });
+
+  it("should allow to use generators inside plugin.after()", function(){
+    afterCalled.should.be.true;
+  });
+
+  it("should allow to use generators inside plugin.route()", function*(){
+    yield supertest(server.listener).get("/handler").expect(200).expect("Handler").end();
+  });
+
+  it("should allow to use generators inside plugin.handler()", function*(){
+    yield supertest(server.listener).get("/namedHandler").expect(200).expect("Plugin Handler").end();
+  });
+});
