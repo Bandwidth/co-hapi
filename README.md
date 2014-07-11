@@ -4,7 +4,7 @@
 [![Dependencies](https://david-dm.org/avbel/co-hapi.png)](https://david-dm.org/avbel/co-hapi)
 
 
-This module lets you use powered by [co](https://github.com/visionmedia/co) generators inside [hapi](http://hapijs.com/) applications. Node 0.11+ is required.
+This module lets you use powered by [co](https://github.com/visionmedia/co) generators inside [hapi](http://hapijs.com/) applications. Node 0.11+ is required. Forget aboout callback hell.
 
 
 ## Install
@@ -51,6 +51,8 @@ co(function*(){
   server.method("add", function*(a, b){
     return a + b; //use 'return' or 'throw' instead of 'next'
   });
+
+  yield server.pack.register(require("my-plugin")); //registering of plugin
 
   server.route({
     method: "GET",

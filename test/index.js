@@ -269,3 +269,47 @@ describe("methods", function(){
   });
 
 });
+
+describe("registering of plugins", function(){
+  let server, plugin1, plugin1Registered = false, plugin2, plugin2Registered = false;
+  before(function*(){
+    plugin1 = {
+      register: function(plugin, options, next){
+        plugin1Registered = true;
+        next();
+      }
+    };
+    plugin2 = {
+      register: function(plugin, options, next){
+        plugin2Registered = true;
+        next();
+      }
+    };
+    plugin1.register.attributes = {
+      name: "plugin1",
+      version: "1.0.0"
+    };
+    plugin2.register.attributes = {
+      name: "plugin2",
+      version: "1.0.0"
+    };
+    server = new Hapi.Server(3001);
+  });
+
+  it("should add ability to use pack.register with yield", function*(){
+    plugin1Registered = false;
+    yield server.pack.register(plugin1);
+    plugin1Registered.should.be.true;
+  });
+
+  it("should add ability to use pack.register with callback", function(done){
+    plugin2Registered = false;
+    server.pack.register(plugin2, function(err){
+      if(err){
+        return done(err);
+      }
+      plugin2Registered.should.be.true;
+      done();
+    });
+  });
+});

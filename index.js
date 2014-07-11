@@ -135,6 +135,6 @@ Pack.prototype._handler = function(name, fn){
 shim(Server, "start");
 shim(Server, "stop");
 
-//shim(Pack, "register");
+shim(Pack, "register");
 
 module.exports = Hapi;
