@@ -30,12 +30,22 @@ function wrapPluginRoot(plugin){
   plugin.after = function(fn){
     return after.call(this, wrapHandler(fn, true));
   };
+  let dependency = plugin.dependency;
+  plugin.dependency = function(){
+    let args = Array.prototype.slice.call(arguments, 0);
+    let fn = args[1];
+    if(typeof fn === "function"){
+      args[1] = wrapHandler(fn, true);
+    }
+    return dependency.apply(this, args);
+  };
   let handler = plugin.handler;
   plugin.handler = function(name, fn){
     return handler.call(this, name, function(route, options){
       return wrapHandler(fn(route, options));
     });
   };
+  shim(plugin, "register", true);
 }
 
 
@@ -110,9 +120,12 @@ function wrapPluginRegister(plugin){
   plugin.register.attributes = register.attributes;
 }
 
-function shim(type, methodName){
-  let original = type.prototype[methodName];
-  type.prototype[methodName] = function(){
+function shim(type, methodName, shimInstance){
+  if(!shimInstance){
+    type = type.prototype;
+  }
+  let original = type[methodName];
+  type[methodName] = function(){
     let args =  Array.prototype.slice.call(arguments, 0);
     if(typeof args[args.length - 1] === "function"){
       return original.apply(this, args);

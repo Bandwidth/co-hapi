@@ -332,7 +332,7 @@ describe("registering of plugins", function(){
 });
 
 describe("plugin's actions", function(){
-  let server, afterCalled = false;
+  let server, afterCalled = false, dependencyCalled = false, plugin2Registered = false;
   before(function*(){
     server = new Hapi.Server(3001);
     let plugin1 =  {
@@ -364,6 +364,22 @@ describe("plugin's actions", function(){
             handler: {"pluginHandler": {option1: 1}}
           }
         ]);
+        yield plugin.register({
+          register: function*(){
+            plugin2Registered = true;
+          },
+          name: "plugin2"
+        });
+        plugin.dependency("plugin2", function*(p){
+          yield tick();
+          p.should.equal(plugin);
+          dependencyCalled = true;
+        });
+        plugin.ext("onRequest", function*(request){
+          if(request.url.path == "/ext"){
+            return "Ext";
+          }
+        });
       },
       name: "plugin1"
     };
@@ -395,5 +411,17 @@ describe("plugin's actions", function(){
 
   it("should allow to use generators inside plugin.handler()", function*(){
     yield supertest(server.listener).get("/namedHandler").expect(200).expect("Plugin Handler").end();
+  });
+
+  it("should allow to use yield plugin.register()", function(){
+    plugin2Registered.should.be.true;
+  });
+
+  it("should allow to use generators inside plugin.dependency()", function(){
+    dependencyCalled.should.be.true;
+  });
+
+  it("should allow to use generators inside plugin.ext()", function*(){
+    yield supertest(server.listener).get("/ext").expect(200).expect("Ext").end();
   });
 });
