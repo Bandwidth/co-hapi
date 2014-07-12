@@ -269,6 +269,11 @@ describe("methods", function(){
     });
   });
 
+  it("should also ability to call via yield", function*(){
+    (yield server.methods.add(1, 2)).should.equal(3);
+    (yield server.methods.stdAdd(7, 2)).should.equal(9);
+  });
+
 });
 
 describe("registering of plugins", function(){
@@ -392,7 +397,7 @@ describe("plugin's actions", function(){
     yield server.stop();
   });
 
-  it("should allow to use generators inside plugin.server()", function(done){
+  it("should allow to use generators inside plugin.method()", function(done){
     server.methods.sum(1, 2, function(err, result){
       if(err){
         return done(err);
@@ -400,6 +405,10 @@ describe("plugin's actions", function(){
       result.should.equal(3);
       done();
     });
+  });
+
+  it("should also ability to call server methods via yield", function*(){
+    (yield server.methods.sum(1, 2)).should.equal(3);
   });
 
   it("should allow to use generators inside plugin.after()", function(){

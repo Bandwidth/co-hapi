@@ -11,21 +11,6 @@ function canUseCo(result){
 }
 
 function wrapPluginRoot(plugin){
-  let method = plugin.method;
-  plugin.method = function(){
-    let args = Array.prototype.slice.call(arguments, 0);
-    let fn = args[1];
-    if(typeof fn === "function"){
-      args[1] = function(){
-        let result = fn.apply(this, arguments);
-        if(canUseCo(result)){
-          let next = arguments[arguments.length - 1];
-          co(result)(next);
-        }
-      };
-    }
-    return method.apply(this, args);
-  };
   let after = plugin.after;
   plugin.after = function(fn){
     return after.call(this, wrapHandler(fn, true));
@@ -140,6 +125,32 @@ function shim(type, methodName, shimInstance){
   };
 }
 
+function wrapMethods(methods){
+  for(let k in methods){
+    let method = methods[k];
+    if(typeof method === "function"){
+      if(method.wrapped){
+        continue;
+      }
+      methods[k] = function(){
+        let args = Array.prototype.slice.call(arguments, 0);
+        let next = args[args.length - 1];
+        let self = this;
+        if(typeof next === "function"){
+          return method.apply(self, args);
+        }
+        return function(callback){
+          args.push(callback);
+          return method.apply(self, args);
+        };
+      };
+      methods[k].wrapped = true;
+    }
+    else{
+      wrapMethods(method);
+    }
+  }
+}
 
 let _route = Server.prototype._route;
 Server.prototype._route = function (configs, env) {
@@ -164,9 +175,21 @@ Pack.prototype._handler = function(name, fn){
   });
 };
 
-let _method = Pack.prototype._method;
+let _register = Pack.prototype._register;
+Pack.prototype._register = function(plugins){
+  if(plugins.plugin){
+    wrapPluginRegister(plugins.plugin);
+  }
+  else{
+    plugins = Array.isArray(plugins)? plugins: [plugins];
+    plugins.forEach(wrapPluginRegister);
+  }
+  _register.apply(this, arguments);
+};
 
-Pack.prototype._method = function(){
+let Methods = new Pack({})._methods.__proto__.constructor;
+let _add = Methods.prototype._add;
+Methods.prototype._add = function (){
   let args = Array.prototype.slice.call(arguments, 0);
   let fn = args[1];
   if(typeof fn === "function"){
@@ -178,19 +201,9 @@ Pack.prototype._method = function(){
       }
     };
   }
-  _method.apply(this, args);
-};
-
-let _register = Pack.prototype._register;
-Pack.prototype._register = function(plugins){
-  if(plugins.plugin){
-    wrapPluginRegister(plugins.plugin);
-  }
-  else{
-    plugins = Array.isArray(plugins)? plugins: [plugins];
-    plugins.forEach(wrapPluginRegister);
-  }
-  _register.apply(this, arguments);
+  let result = _add.apply(this, args);
+  wrapMethods(this.methods);
+  return result;
 };
 
 shim(Server, "start");

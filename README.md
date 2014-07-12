@@ -52,6 +52,8 @@ co(function*(){
     return a + b; //use 'return' or 'throw' instead of 'next'
   });
 
+  let result = yield server.methods.add(2, 3); //calling server's method via yield (the way with callback is supported too)
+
   yield server.pack.register(require("my-plugin")); //registering of plugin
 
   server.route({
