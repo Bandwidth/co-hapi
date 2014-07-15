@@ -182,7 +182,9 @@ Pack.prototype._register = function(plugins){
   }
   else{
     plugins = Array.isArray(plugins)? plugins: [plugins];
-    plugins.forEach(wrapPluginRegister);
+    plugins.forEach(function(plugin){
+      wrapPluginRegister(plugin.plugin?plugin.plugin:plugin);
+    });
   }
   _register.apply(this, arguments);
 };
