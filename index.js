@@ -211,9 +211,21 @@ Methods.prototype._add = function (){
 shim(Server, "start");
 shim(Server, "stop");
 
-shim(Pack, "register");
 shim(Pack, "compose", true);
 
 shim(Hapi.state, "prepareValue", true);
+
+let register = Pack.prototype.register;
+Pack.prototype.register = function(){
+  let args =  Array.prototype.slice.call(arguments, 0);
+  if((args.length <= 3 && typeof args[args.length - 1] === "function") || (args.length > 3) ){
+    return register.apply(this, args);
+  }
+  let self = this;
+  return function(callback){
+    args.push(callback);
+    return register.apply(self, args);
+  }
+};
 
 module.exports = Hapi;
