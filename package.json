@@ -3,7 +3,7 @@
     "node": ">=0.11"
   },
   "name": "co-hapi",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Use power os ES6 generators and co inside hapi",
   "main": "index.js",
   "scripts": {
