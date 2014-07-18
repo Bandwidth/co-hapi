@@ -57,7 +57,7 @@ function wrapHandler(handler, useReplyAsNext){
         if(useReplyAsNext){
           return reply(err, data);
         }
-        if(data){
+        if(data != null){
           return reply(data);
         }
       });
