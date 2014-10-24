@@ -3,7 +3,7 @@
     "node": ">=0.11"
   },
   "name": "co-hapi",
-  "version": "0.0.9",
+  "version": "1.0.0",
   "description": "Use power os ES6 generators and co inside hapi",
   "main": "index.js",
   "scripts": {
@@ -22,12 +22,14 @@
     "generators"
   ],
   "devDependencies": {
-    "co": "^3.0.6",
-    "co-mocha": "^0.0.4",
-    "co-supertest": "^0.0.7",
-    "hapi": "^6.0.2",
-    "mocha": "^1.20.1",
-    "should": "^4.0.4",
-    "supertest": "^0.13.0"
+    "co-mocha": "^1.0.2",
+    "co-supertest": "0.0.7",
+    "mocha": "^2.0.1",
+    "should": "^4.1.0",
+    "supertest": "^0.14.0"
+  },
+  "dependencies": {
+    "co": "^3.1.0",
+    "hapi": "^7.1.1"
   }
 }
