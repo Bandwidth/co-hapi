@@ -140,7 +140,11 @@ function wrapMethods(methods){
           return method.apply(self, args);
         }
         return function(callback){
-          args.push(callback);
+          let _callback = function() {
+            let args = Array.prototype.slice.call(arguments, 0, 2)
+            return callback.apply(this, args)
+          }
+          args.push(_callback);
           return method.apply(self, args);
         };
       };
@@ -158,7 +162,7 @@ Server.prototype._route = function (configs, env) {
   return _route.call(this, configs, env);
 };
 
-let _ext = Server.prototype._ext || Server.prototype.ext;
+let _ext = Server.prototype.ext;
 Server.prototype._ext = Server.prototype.ext = function(){
   let args =  Array.prototype.slice.call(arguments, 0);
   let fn = args[1];
